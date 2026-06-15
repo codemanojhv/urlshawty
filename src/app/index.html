@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>shorty.lnk — fast minimal URL shortener with QR</title>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"><\/script>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
+    background: linear-gradient(to bottom right, #f8fafc, #ffffff, #f1f5f9);
+    color: #0f172a;
+    min-height: 100vh;
+  }
+  .container { max-width: 720px; margin: 0 auto; padding: 0 1.5rem; }
+  header {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(255,255,255,0.7);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(226,232,240,0.6);
+  }
+  .nav {
+    display: flex; align-items: center; justify-content: space-between;
+    height: 4rem; max-width: 1200px; margin: 0 auto; padding: 0 1.5rem;
+  }
+  .brand {
+    display: inline-flex; align-items: center; gap: 0.5rem; font-weight: 600;
+  }
+  .brand-icon {
+    width: 2rem; height: 2rem; border-radius: 0.5rem;
+    background: linear-gradient(to bottom right, #0f172a, #334155);
+    display: grid; place-items: center; color: white;
+  }
+  h1 { font-size: 2.5rem; line-height: 1.1; letter-spacing: -0.02em; font-weight: 700; }
+  .card {
+    background: white; border: 1px solid #e2e8f0; border-radius: 0.75rem;
+    box-shadow: 0 10px 25px -10px rgba(15,23,42,0.08);
+  }
+  .input {
+    width: 100%; height: 3rem; padding: 0 0.75rem;
+    border: 1px solid #e2e8f0; border-radius: 0.5rem;
+    background: white; color: #0f172a; font-size: 1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .input:focus {
+    outline: none; border-color: #cbd5e1;
+    box-shadow: 0 0 0 3px rgba(15,23,42,0.08);
+  }
+  .input-error { border-color: #fecaca; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+    height: 3rem; padding: 0 1rem; border-radius: 0.5rem;
+    font-weight: 500; font-size: 1rem; border: 1px solid transparent;
+    cursor: pointer; transition: background 0.2s;
+    background: #0f172a; color: white;
+  }
+  .btn:hover:not(:disabled) { background: #1e293b; }
+  .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+  .btn-ghost { background: transparent; color: #334155; }
+  .btn-ghost:hover { background: #f1f5f9; }
+  .badge {
+    display: inline-block; padding: 0.25rem 0.5rem; border-radius: 0.375rem;
+    background: #f1f5f9; color: #475569; font-size: 0.75rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+  }
+  .result-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 1rem; }
+  .qr-wrap { background: white; border: 1px solid #e2e8f0; padding: 0.75rem; border-radius: 0.75rem; display: inline-block; }
+  .history-item {
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    padding: 0.75rem; border: 1px solid #f1f5f9; border-radius: 0.5rem; background: white;
+  }
+  .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+</style>
+</head>
+<body>
+<header role="banner">
+  <div class="nav">
+    <div class="brand">
+      <div class="brand-icon" aria-hidden="true">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+      </div>
+      <span>shorty<span style="color:#64748b">.lnk</span></span>
+    </div>
+    <button class="btn btn-ghost" id="clearHistory" aria-label="Clear history">Clear history</button>
+  </div>
+</header>
+
+<main class="container" style="padding-top:5rem; padding-bottom:6rem;">
+  <section style="text-align:center; margin-bottom:2.5rem;">
+    <h1>Short links, <span style="color:#94a3b8">instantly</span></h1>
+    <p style="margin-top:1rem; font-size:1.125rem; color:#64748b; max-width:32rem; margin-left:auto; margin-right:auto; line-height:1.6;">
+      Paste any URL, get a clean short link with a QR code. No sign-up, no friction.
+    </p>
+  </section>
+
+  <section style="margin-bottom:2rem;">
+    <div class="card" style="padding:1.5rem;">
+      <div style="display:flex; flex-direction:column; gap:1rem;">
+        <div>
+          <label for="url" style="font-size:0.875rem; font-weight:600; color:#334155;">Destination URL</label>
+          <input id="url" type="url" class="input" placeholder="https://example.com/very-long-link" autocomplete="url" style="margin-top:0.5rem;">
+          <p id="urlError" class="visually-hidden" role="alert"></p>
+        </div>
+        <div>
+          <label for="alias" style="font-size:0.875rem; font-weight:600; color:#334155;">Custom alias <span style="color:#94a3b8; font-weight:400">(optional)</span></label>
+          <div style="display:flex; margin-top:0.5rem;">
+            <span style="display:inline-flex; align-items:center; padding:0 0.75rem; border:1px solid #e2e8f0; border-right:0; border-radius:0.5rem 0 0 0.5rem; background:#f8fafc; color:#64748b; font-size:0.875rem;">shorty.lnk/</span>
+            <input id="alias" type="text" class="input" placeholder="my-campaign-link" style="border-radius:0 0.5rem 0.5rem 0;">
+          </div>
+        </div>
+        <button id="shorten" class="btn">Shorten URL</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="resultSection" style="display:none; margin-bottom:2rem;">
+    <div class="result-box">
+      <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:1rem;">
+        <div style="min-width:0; flex:1;">
+          <p style="font-size:0.75rem; font-weight:600; color:#94a3b8; text-transform:uppercase; letter-spacing:0.05em; margin:0 0 0.25rem;">Your short link</p>
+          <a id="shortUrl" href="#" target="_blank" rel="noopener noreferrer" style="font-size:1.25rem; font-weight:600; color:#0f172a; word-break:break-all; text-decoration:none;"></a>
+        </div>
+        <button id="copyBtn" class="btn" style="height:2.25rem; padding:0 0.75rem; font-size:0.875rem;">Copy</button>
+      </div>
+      <div style="border-top:1px solid #e2e8f0; padding-top:0.75rem; margin-top:0.75rem;">
+        <p style="font-size:0.75rem; color:#94a3b8; margin:0 0 0.25rem;">Original URL</p>
+        <p id="originalUrl" style="font-size:0.875rem; color:#475569; word-break:break-all; margin:0;"></p>
+      </div>
+      <div style="border-top:1px solid #e2e8f0; padding-top:1rem; margin-top:1rem; display:flex; flex-wrap:wrap; gap:1.5rem; align-items:center;">
+        <div class="qr-wrap">
+          <canvas id="qr" aria-label="QR code for short link" role="img" title="QR code for short link"></canvas>
+        </div>
+        <div style="flex:1; min-width:220px;">
+          <p style="font-weight:600; font-size:0.95rem; margin:0 0 0.25rem;">Scan to share</p>
+          <p style="font-size:0.8rem; color:#64748b; margin:0 0 0.75rem; line-height:1.5;">High contrast QR. Works with any smartphone camera or QR reader app.</p>
+          <button id="dlPng" class="btn" style="height:2.25rem; font-size:0.875rem;">Download PNG</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="historySection" style="display:none; margin-bottom:3rem;">
+    <h2 style="font-size:1.125rem; font-weight:600; margin:0 0 1rem;">Recent links</h2>
+    <div id="history" style="display:flex; flex-direction:column; gap:0.5rem;"></div>
+  </section>
+
+  <section style="margin-bottom:4rem;">
+    <h2 style="font-size:1.5rem; font-weight:600; text-align:center; margin:0 0 1.5rem;">Built for speed and simplicity</h2>
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; max-width:800px; margin:0 auto;">
+      <div style="padding:1.25rem; border:1px solid #f1f5f9; border-radius:0.75rem; background:white;">
+        <div style="width:2.5rem; height:2.5rem; border-radius:0.5rem; background:#f8fafc; border:1px solid #f1f5f9; display:grid; place-items:center; color:#334155; margin-bottom:0.75rem;">⚡</div>
+        <p style="font-weight:600; font-size:0.9rem; margin:0 0 0.25rem;">Instant</p>
+        <p style="font-size:0.8rem; color:#64748b; margin:0;">Shorten any URL in one click.</p>
+      </div>
+      <div style="padding:1.25rem; border:1px solid #f1f5f9; border-radius:0.75rem; background:white;">
+        <div style="width:2.5rem; height:2.5rem; border-radius:0.5rem; background:#f8fafc; border:1px solid #f1f5f9; display:grid; place-items:center; color:#334155; margin-bottom:0.75rem;">📱</div>
+        <p style="font-weight:600; font-size:0.9rem; margin:0 0 0.25rem;">QR ready</p>
+        <p style="font-size:0.8rem; color:#64748b; margin:0;">Every link gets a downloadable QR code.</p>
+      </div>
+      <div style="padding:1.25rem; border:1px solid #f1f5f9; border-radius:0.75rem; background:white;">
+        <div style="width:2.5rem; height:2.5rem; border-radius:0.5rem; background:#f8fafc; border:1px solid #f1f5f9; display:grid; place-items:center; color:#334155; margin-bottom:0.75rem;">🔒</div>
+        <p style="font-weight:600; font-size:0.9rem; margin:0 0 0.25rem;">Minimal</p>
+        <p style="font-size:0.8rem; color:#64748b; margin:0;">Clean interface. No trackers, no clutter.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer style="border-top:1px solid #e2e8f0; padding:1.5rem 0; text-align:center; background:white;">
+  <div class="container">
+    <p style="font-size:0.875rem; color:#94a3b8; margin:0;">shorty.lnk · Fast, accessible URL shortening</p>
+  </div>
+</footer>
+
+<script>
+(function() {
+  const LS_KEY = 'shorty.history.v1';
+  const urlInput = document.getElementById('url');
+  const aliasInput = document.getElementById('alias');
+  const shortenBtn = document.getElementById('shorten');
+  const resultSection = document.getElementById('resultSection');
+  const shortUrl = document.getElementById('shortUrl');
+  const originalUrl = document.getElementById('originalUrl');
+  const copyBtn = document.getElementById('copyBtn');
+  const dlPng = document.getElementById('dlPng');
+  const historySection = document.getElementById('historySection');
+  const history = document.getElementById('history');
+  const urlError = document.getElementById('urlError');
+  const qrCanvas = document.getElementById('qr');
+  const clearHistoryBtn = document.getElementById('clearHistory');
+
+  let currentShortUrl = '';
+
+  function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  function loadHistory() {
+    try { return JSON.parse(localStorage.getItem(LS_KEY) || '[]'); } catch { return []; }
+  }
+  function saveHistory(items) {
+    localStorage.setItem(LS_KEY, JSON.stringify(items.slice(0, 40)));
+  }
+  function renderHistory() {
+    const items = loadHistory();
+    if (!items.length) { historySection.style.display = 'none'; return; }
+    historySection.style.display = 'block';
+    history.innerHTML = items.slice(0, 8).map(it => `
+      <div class="history-item">
+        <div style="min-width:0; flex:1;">
+          <a href="${esc(it.shortUrl)}" target="_blank" rel="noopener noreferrer" style="font-weight:600; font-size:0.9rem; color:#0f172a; text-decoration:none; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(it.shortUrl)}</a>
+          <p style="font-size:0.75rem; color:#94a3b8; margin:0.25rem 0 0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${esc(it.originalUrl)}</p>
+        </div>
+        <button class="btn copy-history" data-url="${esc(it.shortUrl)}" style="height:2rem; font-size:0.8rem;">Copy</button>
+      </div>
+    `).join('');
+    history.querySelectorAll('.copy-history').forEach(btn => btn.addEventListener('click', () => copy(btn.dataset.url)));
+  }
+
+  function showError(msg) {
+    urlError.textContent = msg;
+    urlError.classList.remove('visually-hidden');
+    urlInput.classList.add('input-error');
+  }
+  function clearError() {
+    urlError.textContent = '';
+    urlError.classList.add('visually-hidden');
+    urlInput.classList.remove('input-error');
+  }
+
+  function isValidUrl(v) {
+    try { const u = new URL(v); return /^https?:$/i.test(u.protocol); } catch { return false; }
+  }
+
+  function generateCode(len = 6) {
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    const arr = new Uint8Array(len);
+    crypto.getRandomValues(arr);
+    return Array.from(arr).map(n => chars[n % chars.length]).join('');
+  }
+
+  function makeShort(url, alias) {
+    const items = loadHistory();
+    if (alias) {
+      const a = alias.toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 30);
+      if (!a || a.length < 2) throw new Error('Alias too short');
+      if (items.some(i => i.shortCode === a)) throw new Error('Alias taken');
+      const entry = { shortCode: a, shortUrl: location.origin + '/' + a, originalUrl: url, createdAt: Date.now() };
+      saveHistory([entry, ...items]);
+      return entry;
+    }
+    let code = generateCode();
+    let tries = 0;
+    while (items.some(i => i.shortCode === code) && tries < 8) { code = generateCode(); tries++; }
+    if (tries >= 8) throw new Error('Collision, try again');
+    const entry = { shortCode: code, shortUrl: location.origin + '/' + code, originalUrl: url, createdAt: Date.now() };
+    saveHistory([entry, ...items]);
+    return entry;
+  }
+
+  async function drawQR(text) {
+    try {
+      await QRCode.toCanvas(qrCanvas, text, {
+        width: 220,
+        margin: 2,
+        color: { dark: '#0f172a', light: '#ffffff' },
+        errorCorrectionLevel: 'H'
+      });
+      qrCanvas.setAttribute('aria-label', 'QR code for ' + text);
+      qrCanvas.setAttribute('title', 'QR code for ' + text);
+    } catch (e) {
+      console.error('QR failed', e);
+    }
+  }
+
+  async function copy(text) {
+    try { await navigator.clipboard.writeText(text); } catch {}
+  }
+
+  async function shorten() {
+    clearError();
+    const url = urlInput.value.trim();
+    if (!url) { showError('Please enter a URL'); return; }
+    if (!isValidUrl(url)) { showError('Please enter a valid URL starting with http(s)://'); return; }
+    try {
+      shortenBtn.disabled = true;
+      shortenBtn.textContent = 'Shortening...';
+      const entry = makeShort(url, aliasInput.value);
+      currentShortUrl = entry.shortUrl;
+      resultSection.style.display = 'block';
+      shortUrl.textContent = entry.shortUrl;
+      shortUrl.href = entry.shortUrl;
+      originalUrl.textContent = entry.originalUrl;
+      await drawQR(entry.shortUrl);
+      copyBtn.textContent = 'Copy';
+      renderHistory();
+      urlInput.value = '';
+      aliasInput.value = '';
+    } catch (err) {
+      showError(err.message || 'Something went wrong');
+    } finally {
+      shortenBtn.disabled = false;
+      shortenBtn.textContent = 'Shorten URL';
+    }
+  }
+
+  function downloadPNG() {
+    if (!currentShortUrl) return;
+    const a = document.createElement('a');
+    a.href = qrCanvas.toDataURL('image/png');
+    a.download = 'qrcode.png';
+    a.click();
+  }
+
+  copyBtn.addEventListener('click', async () => {
+    if (!currentShortUrl) return;
+    await copy(currentShortUrl);
+    copyBtn.textContent = 'Copied!';
+    setTimeout(() => copyBtn.textContent = 'Copy', 2000);
+  });
+  shortenBtn.addEventListener('click', shorten);
+  urlInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); shorten(); } });
+  aliasInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); shorten(); } });
+  dlPng.addEventListener('click', downloadPNG);
+  clearHistoryBtn.addEventListener('click', () => {
+    localStorage.removeItem(LS_KEY);
+    renderHistory();
+    resultSection.style.display = 'none';
+    currentShortUrl = '';
+  });
+  urlInput.addEventListener('input', clearError);
+
+  renderHistory();
+})();
+</script>
+</body>
+</html>

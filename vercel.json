@@ -1,0 +1,10 @@
+{
+  "name": "urlshawty",
+  "scope": "manojhv13-gmailcoms-projects",
+  "regions": ["iad1"],
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "redirects": [],
+  "rewrites": [],
+  "headers": []
+}
