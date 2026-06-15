@@ -14,11 +14,11 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "urlshawty — fast links",
-    template: "%s · urlshawty",
+    default: "urlshawtys — fast links",
+    template: "%s · urlshawtys",
   },
   description: "Shorten any URL. Get a clean short link and a QR code instantly.",
-  metadataBase: new URL("https://urlshawty.vercel.app"),
+  metadataBase: new URL("https://urlshawtys.vercel.app"),
   robots: { index: false, follow: false },
 };
 

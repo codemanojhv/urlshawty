@@ -7,7 +7,7 @@ async function ensureDataDir() {
   try { await fs.mkdir(DATA_DIR, { recursive: true }); } catch {}
 }
 
-export type LinkRow = {
+type LinkRow = {
   code: string;
   url: string;
   createdAt: string;
@@ -22,7 +22,7 @@ export type LinkRow = {
   }[];
 };
 
-export async function readLinks(): Promise<LinkRow[]> {
+async function readLinks(): Promise<LinkRow[]> {
   await ensureDataDir();
   const dbPath = path.join(DATA_DIR, "links.json");
   try {
@@ -90,8 +90,8 @@ export async function getAnalytics(code: string) {
   const oneWeek = 7 * oneDay;
   const clicks = link.clickHistory ?? [];
 
-  const clicks24h = clicks.filter((c) => now.getTime() - new Date(c.timestamp).getTime() < oneDay).length;
-  const clicks7d = clicks.filter((c) => now.getTime() - new Date(c.timestamp).getTime() < oneWeek).length;
+  const clicks24h = clicks.filter((c) => now.getTime() - new Date((c as any).timestamp).getTime() < oneDay).length;
+  const clicks7d = clicks.filter((c) => now.getTime() - new Date((c as any).timestamp).getTime() < oneWeek).length;
 
   const referrerCounts: Record<string, number> = {};
   clicks.forEach((c) => {

@@ -39,7 +39,7 @@ export async function POST(request: Request) {
       process.env.NEXT_PUBLIC_BASE_URL ||
       (request.headers.get("x-forwarded-host")
         ? `https://${request.headers.get("x-forwarded-host")}`
-        : "");
+        : "https://urlshawtys.vercel.app");
 
     const row = await createLinkRow({
       code,
