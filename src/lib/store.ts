@@ -1,7 +1,10 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
-const DATA_DIR = path.join(process.cwd(), "data");
+const isServerless = process.env.VERCEL === "1";
+const DATA_DIR = isServerless
+  ? "/tmp/urlshawtys"
+  : path.join(process.cwd(), "data");
 const FILE = path.join(DATA_DIR, "links.json");
 
 async function ensure() {
