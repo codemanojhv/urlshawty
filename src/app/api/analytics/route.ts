@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAnalytics } from "@/lib/store";
+import { getAnalyticsFor } from "@/lib/store";
 
 export async function GET(request: Request) {
   try {
@@ -10,7 +10,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Code is required" }, { status: 400 });
     }
 
-    const analytics = await getAnalytics(code);
+    const analytics = await getAnalyticsFor(code);
 
     if (!analytics) {
       return NextResponse.json({ error: "Link not found" }, { status: 404 });

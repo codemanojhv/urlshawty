@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createLinkRecord, findByCode } from "@/lib/store";
+import { createLinkRecord, findLinkByCode } from "@/lib/store";
 
 const CHARACTERS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Invalid custom alias" }, { status: 400 });
       }
 
-      const existing = await findByCode(customAlias);
+      const existing = await findLinkByCode(customAlias);
       if (existing) {
         return NextResponse.json({ error: "Alias already taken" }, { status: 409 });
       }

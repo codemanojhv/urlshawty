@@ -409,49 +409,85 @@ export default function Home() {
           </section>
         )}
 
-        {/* History / Saved Links Section */}
-        {(savedLinks.length > 0 || history.length > 0 || authUser?.email) && (
+        {/* Login History / Saved Links Section */}
+        {!authLoading && history.length > 0 && !authUser && (
           <section className="pb-20">
             <h2 className="text-lg font-semibold text-slate-900 mb-4">
-              {authUser?.email ? `Saved links for ${authUser.email}` : "Recent links"}
+              Recent links
             </h2>
             <div className="space-y-2 max-w-2xl">
-              {(authUser?.email ? savedLinks : history).map((item) => {
-                const shortUrl = item.shortUrl ?? `${base}/${item.code}`;
-                const originalUrl = item.originalUrl ?? item.url;
-                const key = item.shortCode ?? item.code;
-                return (
-                  <div
-                    key={key + item.createdAt}
-                    className="flex items-center justify-between gap-3 p-3 rounded-lg border border-slate-100 bg-white hover:border-slate-200 transition-colors"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <a
-                        href={shortUrl}
-                        className="text-sm font-medium text-slate-900 hover:text-slate-700 block truncate"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {shortUrl}
-                      </a>
-                      <p className="text-xs text-slate-400 truncate mt-0.5">
-                        {originalUrl}
-                      </p>
-                    </div>
-                    <div className="flex gap-1.5 shrink-0">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => copyToClipboard(shortUrl)}
-                        aria-label={`Copy ${shortUrl}`}
-                      >
-                        <CopyIcon />
-                      </Button>
-                    </div>
+              {history.map((item) => (
+                <div
+                  key={item.shortCode + item.createdAt}
+                  className="flex items-center justify-between gap-3 p-3 rounded-lg border border-slate-100 bg-white hover:border-slate-200 transition-colors"
+                >
+                  <div className="min-w-0 flex-1">
+                    <a
+                      href={item.shortUrl}
+                      className="text-sm font-medium text-slate-900 hover:text-slate-700 block truncate"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {item.shortUrl}
+                    </a>
+                    <p className="text-xs text-slate-400 truncate mt-0.5">
+                      {item.originalUrl}
+                    </p>
                   </div>
-                );
-              })}
+                  <div className="flex gap-1.5 shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => copyToClipboard(item.shortUrl)}
+                      aria-label={`Copy ${item.shortUrl}`}
+                    >
+                      <CopyIcon />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {!authLoading && savedLinks.length > 0 && authUser?.email && (
+          <section className="pb-20">
+            <h2 className="text-lg font-semibold text-slate-900 mb-4">
+              Saved links for {authUser.email}
+            </h2>
+            <div className="space-y-2 max-w-2xl">
+              {savedLinks.map((item) => (
+                <div
+                  key={item.code + item.createdAt}
+                  className="flex items-center justify-between gap-3 p-3 rounded-lg border border-slate-100 bg-white hover:border-slate-200 transition-colors"
+                >
+                  <div className="min-w-0 flex-1">
+                    <a
+                      href={`${base}/${item.code}`}
+                      className="text-sm font-medium text-slate-900 hover:text-slate-700 block truncate"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {`${base}/${item.code}`}
+                    </a>
+                    <p className="text-xs text-slate-400 truncate mt-0.5">
+                      {item.url}
+                    </p>
+                  </div>
+                  <div className="flex gap-1.5 shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => copyToClipboard(`${base}/${item.code}`)}
+                      aria-label={`Copy ${item.code}`}
+                    >
+                      <CopyIcon />
+                    </Button>
+                  </div>
+                </div>
+              ))}
             </div>
           </section>
         )}
