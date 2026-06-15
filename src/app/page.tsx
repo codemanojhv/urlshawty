@@ -296,7 +296,7 @@ export default function Home() {
                 </label>
                 <div className="flex">
                   <span className="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-slate-200 bg-slate-50 text-slate-500 text-sm">
-                    shorty.lnk/
+                    urlshawtys.vercel.app/
                   </span>
                   <Input
                     id="alias-input"
@@ -483,7 +483,7 @@ export default function Home() {
         {/* Footer */}
         <footer className="border-t border-slate-200/60 py-8 text-center">
           <p className="text-sm text-slate-400">
-            shorty.lnk · Fast, accessible URL shortening
+            urlshawtys.vercel.app · Fast, accessible URL shortening
           </p>
         </footer>
       </main>
